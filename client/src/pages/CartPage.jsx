@@ -22,7 +22,7 @@ const CartPage = () => {
                 price: item.price
             }));
 
-            await axios.post('http://localhost:5000/api/orders', {
+            await axios.post('https://farmdirect-2.onrender.com/api/orders', {
                 consumerId: user.id,
                 items: orderItems,
                 totalAmount: total

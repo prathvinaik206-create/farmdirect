@@ -39,7 +39,7 @@ const ConsumerMarketplace = () => {
 
     const fetchProducts = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/products');
+            const res = await axios.get('https://farmdirect-2.onrender.com/api/products');
             setProducts(res.data);
             setFilteredProducts(res.data);
         } catch (err) {

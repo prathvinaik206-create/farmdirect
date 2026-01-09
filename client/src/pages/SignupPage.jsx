@@ -26,7 +26,7 @@ const SignupPage = () => {
         e.preventDefault();
         setError('');
         try {
-            const res = await axios.post('http://localhost:5000/api/auth/signup', { ...formData, role });
+            const res = await axios.post('https://farmdirect-2.onrender.com/api/auth/signup', { ...formData, role });
             const user = res.data.user;
             login(user);
             navigate(role === 'farmer' ? '/farmer/dashboard' : '/marketplace');

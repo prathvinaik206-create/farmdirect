@@ -15,7 +15,7 @@ const ProductDetailsPage = () => {
         const fetchProduct = async () => {
             try {
                 // In a real app we would have a specific get endpoint, but filtering list works for local JSON
-                const res = await axios.get('http://localhost:5000/api/products');
+                const res = await axios.get('https://farmdirect-2.onrender.com/api/products');
                 const found = res.data.find(p => p.id === id);
                 setProduct(found);
             } catch (err) {

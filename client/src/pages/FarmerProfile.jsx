@@ -15,7 +15,7 @@ const FarmerProfile = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const res = await axios.put(`http://localhost:5000/api/users/${user.id}`, formData);
+            const res = await axios.put(`https://farmdirect-2.onrender.com/api/users/${user.id}`, formData);
             updateUser(res.data.user);
             setMsg('Profile updated successfully!');
             setTimeout(() => setMsg(''), 3000);

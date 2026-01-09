@@ -22,7 +22,7 @@ const FarmerListings = () => {
 
     const fetchProducts = async () => {
         try {
-            const res = await axios.get(`http://localhost:5000/api/products/farmer/${user.id}`);
+            const res = await axios.get(`https://farmdirect-2.onrender.com/api/products/farmer/${user.id}`);
             setProducts(res.data);
         } catch (err) {
             console.error("Failed to fetch products");
@@ -38,7 +38,7 @@ const FarmerListings = () => {
                 farmerId: user.id,
                 image: newProduct.image || 'https://images.unsplash.com/photo-1595855709915-d7b264906567?auto=format&fit=crop&w=400&q=80' // default veggie
             };
-            await axios.post('http://localhost:5000/api/products', productData);
+            await axios.post('https://farmdirect-2.onrender.com/api/products', productData);
             setShowAddForm(false);
             setNewProduct({ name: '', price: '', unit: 'kg', description: '', pincode: user.address, image: '' });
             fetchProducts();
