@@ -8,6 +8,8 @@ const User = require('./models/User');
 const Product = require('./models/Product');
 const Order = require('./models/Order');
 
+const nodemailer = require('nodemailer');
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -22,6 +24,15 @@ if (process.env.MONGO_URI) {
 } else {
     console.warn('WARNING: MONGO_URI is not defined. Database operations will fail.');
 }
+
+// Nodemailer Transporter
+const transporter = nodemailer.createTransport({
+    service: 'gmail', // or use host/port
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
 
 // Health Check Endpoint
 app.get('/api/health', (req, res) => {
@@ -63,6 +74,22 @@ app.post('/api/auth/signup', async (req, res) => {
         });
 
         await newUser.save();
+
+        // Send Welcome Email (Async - don't block response)
+        const mailOptions = {
+            from: '"FarmDirect" <' + process.env.EMAIL_USER + '>',
+            to: email,
+            subject: 'Welcome to FarmDirect! 🚜',
+            text: `Hi ${name},\n\nThank you for joining FarmDirect as a ${role}! We are excited to have you on board.\n\nBest Regards,\nThe FarmDirect Team`
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                console.log('Email Error: ', error);
+            } else {
+                console.log('Email sent: ' + info.response);
+            }
+        });
 
         res.status(201).json({ message: 'User created successfully', user: newUser });
     } catch (err) {
