@@ -1,0 +1,66 @@
+/* Auth.css */
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+    padding: 20px;
+    background: radial-gradient(circle at center, rgba(46, 204, 113, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.auth-card h2 {
+    margin-bottom: 30px;
+    color: var(--text-dark);
+}
+
+.role-switch {
+    display: flex;
+    background: #eee;
+    padding: 5px;
+    border-radius: var(--radius-md);
+    margin-bottom: 25px;
+}
+
+.role-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-weight: 600;
+    color: #888;
+    border-radius: var(--radius-sm);
+    transition: all 0.3s;
+}
+
+.role-btn.active {
+    background: white;
+    color: var(--primary-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.error-msg {
+    color: var(--danger-color);
+    background: rgba(231, 76, 60, 0.1);
+    padding: 10px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+}
+
+.auth-footer {
+    margin-top: 20px;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.accent-link {
+    color: var(--primary-color);
+    font-weight: 600;
+}
