@@ -23,6 +23,16 @@ if (process.env.MONGO_URI) {
     console.warn('WARNING: MONGO_URI is not defined. Database operations will fail.');
 }
 
+// Health Check Endpoint
+app.get('/api/health', (req, res) => {
+    const state = mongoose.connection.readyState;
+    const states = { 0: 'disconnected', 1: 'connected', 2: 'connecting', 3: 'disconnecting' };
+    res.json({
+        status: states[state],
+        mongo_uri_connected: !!process.env.MONGO_URI
+    });
+});
+
 // --- AUTHENTICATION ROUTES ---
 
 // Signup
