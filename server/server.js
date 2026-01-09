@@ -163,6 +163,48 @@ app.get('/api/products/farmer/:farmerId', async (req, res) => {
     }
 });
 
+// Update Product
+app.put('/api/products/:id', async (req, res) => {
+    const { id } = req.params;
+    const updates = req.body;
+
+    try {
+        // Ensure the farmer owns the product before updating
+        const product = await Product.findOne({ id });
+        if (!product) return res.status(404).json({ error: 'Product not found' });
+
+        if (updates.farmerId && product.farmerId !== updates.farmerId) {
+            return res.status(403).json({ error: 'Unauthorized operation' });
+        }
+
+        const updatedProduct = await Product.findOneAndUpdate({ id }, updates, { new: true });
+        res.json({ message: 'Product updated', product: updatedProduct });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to update product' });
+    }
+});
+
+// Delete Product
+app.delete('/api/products/:id', async (req, res) => {
+    const { id } = req.params;
+    const { farmerId } = req.query; // Expect farmerId as query param for security check
+
+    try {
+        const product = await Product.findOne({ id });
+        if (!product) return res.status(404).json({ error: 'Product not found' });
+
+        // Simple ownership check
+        if (farmerId && product.farmerId !== farmerId) {
+            return res.status(403).json({ error: 'Unauthorized operation' });
+        }
+
+        await Product.findOneAndDelete({ id });
+        res.json({ message: 'Product deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to delete product' });
+    }
+});
+
 // --- ORDER ROUTES ---
 
 // Create Order (Checkout)
