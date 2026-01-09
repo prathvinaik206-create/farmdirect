@@ -1,7 +1,6 @@
-require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const bodyParser = require('body-parser');
+// const bodyParser = require('body-parser'); // Deprecated but fine
 const mongoose = require('mongoose');
 const { v4: uuidv4 } = require('uuid');
 
@@ -13,16 +12,15 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json()); // Built-in body parser
 
 // MongoDB Connection
-// We use a lenient check here to allow the server to start even if MONGO_URI is missing (for initial setup)
 if (process.env.MONGO_URI) {
     mongoose.connect(process.env.MONGO_URI)
         .then(() => console.log('MongoDB Connected'))
         .catch(err => console.error('MongoDB Connection Error:', err));
 } else {
-    console.warn('WARNING: MONGO_URI is not defined in .env file. Database operations will fail.');
+    console.warn('WARNING: MONGO_URI is not defined. Database operations will fail.');
 }
 
 // --- AUTHENTICATION ROUTES ---
@@ -44,23 +42,23 @@ app.post('/api/auth/signup', async (req, res) => {
         }
 
         const newUser = new User({
-            id: uuidv4(), // Keep UUID for frontend compatibility
+            id: uuidv4(),
             role,
             name,
             email,
             username,
-            password, // In a real app, hash this!
+            password,
             mobile,
-            address: address || '',
-            // Ratings/Sales initialized by default in schema
+            address: address || ''
         });
 
         await newUser.save();
 
         res.status(201).json({ message: 'User created successfully', user: newUser });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error during signup' });
+        console.error("Signup Error:", err);
+        // Return the actual error message to help debugging
+        res.status(500).json({ error: err.message || 'Server error during signup' });
     }
 });
 
