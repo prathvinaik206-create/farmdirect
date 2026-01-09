@@ -11,6 +11,7 @@ import FarmerDashboard from './pages/FarmerDashboard';
 import ConsumerMarketplace from './pages/ConsumerMarketplace';
 import ProductDetailsPage from './pages/ProductDetailsPage';
 import CartPage from './pages/CartPage';
+import ConsumerProfile from './pages/ConsumerProfile';
 
 // Components
 import Navbar from './components/Navbar';
@@ -56,6 +57,11 @@ function AppRoutes() {
           <Route path="/cart" element={
             <ProtectedRoute allowedRole="consumer">
               <CartPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/consumer/profile" element={
+            <ProtectedRoute allowedRole="consumer">
+              <ConsumerProfile />
             </ProtectedRoute>
           } />
         </Routes>

@@ -61,7 +61,7 @@ const Navbar = () => {
                             )}
 
                             <div className="profile-menu">
-                                <div className="nav-link" onClick={() => { navigate(user.role === 'farmer' ? '/farmer/profile' : '/marketplace'); closeMenu(); }}>
+                                <div className="nav-link" onClick={() => { navigate(user.role === 'farmer' ? '/farmer/profile' : '/consumer/profile'); closeMenu(); }}>
                                     <User size={20} />
                                     <span style={{ marginLeft: '5px' }}>{user.name}</span>
                                 </div>

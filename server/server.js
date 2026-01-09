@@ -133,6 +133,18 @@ app.put('/api/users/:id', async (req, res) => {
     }
 });
 
+// Delete User (Account Deletion)
+app.delete('/api/users/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const user = await User.findOneAndDelete({ id: id });
+        if (!user) return res.status(404).json({ error: "User not found" });
+        res.json({ message: "Account deleted successfully" });
+    } catch (err) {
+        res.status(500).json({ error: 'Server error deleting account' });
+    }
+});
+
 
 // --- PRODUCT ROUTES (Farmer) ---
 
