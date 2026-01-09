@@ -1,19 +1,34 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const db = require('./database');
+const mongoose = require('mongoose');
 const { v4: uuidv4 } = require('uuid');
 
+const User = require('./models/User');
+const Product = require('./models/Product');
+const Order = require('./models/Order');
+
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(bodyParser.json());
 
+// MongoDB Connection
+// We use a lenient check here to allow the server to start even if MONGO_URI is missing (for initial setup)
+if (process.env.MONGO_URI) {
+    mongoose.connect(process.env.MONGO_URI)
+        .then(() => console.log('MongoDB Connected'))
+        .catch(err => console.error('MongoDB Connection Error:', err));
+} else {
+    console.warn('WARNING: MONGO_URI is not defined in .env file. Database operations will fail.');
+}
+
 // --- AUTHENTICATION ROUTES ---
 
 // Signup
-app.post('/api/auth/signup', (req, res) => {
+app.post('/api/auth/signup', async (req, res) => {
     const { role, name, email, username, password, mobile, address } = req.body;
 
     // Basic Validation
@@ -21,143 +36,167 @@ app.post('/api/auth/signup', (req, res) => {
         return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Check if user exists
-    const existingUser = db.get('users').find({ username }).value();
-    if (existingUser) {
-        return res.status(400).json({ error: 'Username already taken' });
+    try {
+        // Check if user exists
+        const existingUser = await User.findOne({ username });
+        if (existingUser) {
+            return res.status(400).json({ error: 'Username already taken' });
+        }
+
+        const newUser = new User({
+            id: uuidv4(), // Keep UUID for frontend compatibility
+            role,
+            name,
+            email,
+            username,
+            password, // In a real app, hash this!
+            mobile,
+            address: address || '',
+            // Ratings/Sales initialized by default in schema
+        });
+
+        await newUser.save();
+
+        res.status(201).json({ message: 'User created successfully', user: newUser });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error during signup' });
     }
-
-    const newUser = {
-        id: uuidv4(),
-        role, // 'farmer' or 'consumer'
-        name,
-        email,
-        username,
-        password, // In a real app, hash this!
-        mobile,
-        address: address || '', // Only mandatory for farmer usually, but good to have
-        joinedAt: new Date().toISOString(),
-        // Specific fields
-        ratings: role === 'farmer' ? 0 : undefined,
-        sales: role === 'farmer' ? 0 : undefined,
-        revenue: role === 'farmer' ? 0 : undefined,
-    };
-
-    db.get('users').push(newUser).write();
-
-    res.status(201).json({ message: 'User created successfully', user: newUser });
 });
 
 // Login
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
     const { username, password, role } = req.body;
 
-    const user = db.get('users').find({ username, password, role }).value();
+    try {
+        // Simple plain text password check (Insecure for production, match original logic)
+        const user = await User.findOne({ username, password, role });
 
-    if (!user) {
-        return res.status(401).json({ error: 'Invalid credentials' });
+        if (!user) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        res.json({ message: 'Login successful', user });
+    } catch (err) {
+        res.status(500).json({ error: 'Server error during login' });
     }
-
-    res.json({ message: 'Login successful', user });
 });
 
 // Update Profile
-app.put('/api/users/:id', (req, res) => {
+app.put('/api/users/:id', async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
 
-    // Prevent updating id or role if needed, but for now allow basic edits
-    // In real app, validate 'updates'
+    try {
+        const user = await User.findOneAndUpdate({ id: id }, updates, { new: true });
 
-    const user = db.get('users').find({ id }).assign(updates).write();
+        if (!user) return res.status(404).json({ error: "User not found" });
 
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-    res.json({ message: "Profile updated", user });
+        res.json({ message: "Profile updated", user });
+    } catch (err) {
+        res.status(500).json({ error: 'Server error updating profile' });
+    }
 });
 
 
 // --- PRODUCT ROUTES (Farmer) ---
 
 // List all products (Marketplace)
-app.get('/api/products', (req, res) => {
-    const products = db.get('products').value();
-    res.json(products);
+app.get('/api/products', async (req, res) => {
+    try {
+        const products = await Product.find();
+        res.json(products);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch products' });
+    }
 });
 
 // Add Product
-app.post('/api/products', (req, res) => {
+app.post('/api/products', async (req, res) => {
     const { farmerId, name, price, unit, description, pincode, image } = req.body;
 
     if (!farmerId || !name || !price || !unit) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const farmer = db.get('users').find({ id: farmerId }).value();
-    if (!farmer) return res.status(400).json({ error: "Invalid Farmer ID" });
+    try {
+        const farmer = await User.findOne({ id: farmerId });
+        if (!farmer) return res.status(400).json({ error: "Invalid Farmer ID" });
 
-    const newProduct = {
-        id: uuidv4(),
-        farmerId,
-        farmerName: farmer.name,
-        farmerAddress: farmer.address, // simple caching of address
-        name,
-        price: parseFloat(price),
-        unit, // kg, litre, etc
-        description,
-        pincode,
-        image, // URL or base64
-        rating: 0,
-        reviews: []
-    };
+        const newProduct = new Product({
+            id: uuidv4(),
+            farmerId,
+            farmerName: farmer.name,
+            farmerAddress: farmer.address,
+            name,
+            price: parseFloat(price),
+            unit,
+            description,
+            pincode,
+            image
+        });
 
-    db.get('products').push(newProduct).write();
-    res.status(201).json({ message: 'Product listed', product: newProduct });
+        await newProduct.save();
+        res.status(201).json({ message: 'Product listed', product: newProduct });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to add product' });
+    }
 });
 
 // Get Farmer's Listings
-app.get('/api/products/farmer/:farmerId', (req, res) => {
+app.get('/api/products/farmer/:farmerId', async (req, res) => {
     const { farmerId } = req.params;
-    const products = db.get('products').filter({ farmerId }).value();
-    res.json(products);
+    try {
+        const products = await Product.find({ farmerId });
+        res.json(products);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch farmer products' });
+    }
 });
 
 // --- ORDER ROUTES ---
 
 // Create Order (Checkout)
-app.post('/api/orders', (req, res) => {
+app.post('/api/orders', async (req, res) => {
     const { consumerId, items, totalAmount } = req.body;
 
     if (!consumerId || !items || items.length === 0) {
         return res.status(400).json({ error: 'Invalid order data' });
     }
 
-    const newOrder = {
-        id: uuidv4(),
-        consumerId,
-        items, // Array of { productId, quantity, price }
-        totalAmount,
-        status: 'placed',
-        date: new Date().toISOString()
-    };
+    try {
+        const newOrder = new Order({
+            id: uuidv4(),
+            consumerId,
+            items,
+            totalAmount
+        });
 
-    db.get('orders').push(newOrder).write();
+        await newOrder.save();
 
-    // Update farmer sales/revenue (Optional simplification)
-    items.forEach(item => {
-        const product = db.get('products').find({ id: item.productId }).value();
-        if (product) {
-            const seller = db.get('users').find({ id: product.farmerId });
-            const currentRevenue = seller.value().revenue || 0;
-            const currentSales = seller.value().sales || 0;
-            seller.assign({
-                revenue: currentRevenue + (item.price * item.quantity),
-                sales: currentSales + item.quantity
-            }).write();
+        // Update farmer sales/revenue
+        // Note: Ideally transactions should be used here
+        for (const item of items) {
+            const product = await Product.findOne({ id: item.productId });
+            if (product) {
+                const revenueBoost = item.price * item.quantity;
+                const salesBoost = item.quantity;
+
+                await User.findOneAndUpdate(
+                    { id: product.farmerId },
+                    {
+                        $inc: { revenue: revenueBoost, sales: salesBoost }
+                    }
+                );
+            }
         }
-    });
 
-    res.status(201).json({ message: 'Order placed successfully', order: newOrder });
+        res.status(201).json({ message: 'Order placed successfully', order: newOrder });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to create order' });
+    }
 });
 
 
