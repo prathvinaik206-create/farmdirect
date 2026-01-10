@@ -12,9 +12,8 @@ const CartPage = () => {
     const [isCheckingOut, setIsCheckingOut] = useState(false);
     const [orderSuccess, setOrderSuccess] = useState(false);
 
-    // Calculate Fees
-    const hasHighValueItem = cart.some(item => item.price > 100);
-    const platformFee = hasHighValueItem ? total * 0.05 : 0;
+    // Calculate Fees - Apply 5% platform fee if total purchase amount exceeds ₹100
+    const platformFee = total > 100 ? total * 0.05 : 0;
     const finalTotal = total + platformFee;
 
     const handleCheckout = async () => {
@@ -103,7 +102,7 @@ const CartPage = () => {
                                 <span>₹{total.toFixed(2)}</span>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', margin: '20px 0' }}>
-                                <span>Platform Fee {hasHighValueItem && '(5%)'}</span>
+                                <span>Platform Fee {total > 100 && '(5%)'}</span>
                                 <span>₹{platformFee.toFixed(2)}</span>
                             </div>
                             <hr style={{ border: 'none', borderTop: '1px solid #eee' }} />
