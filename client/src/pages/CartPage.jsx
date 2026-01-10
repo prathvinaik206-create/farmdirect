@@ -12,6 +12,11 @@ const CartPage = () => {
     const [isCheckingOut, setIsCheckingOut] = useState(false);
     const [orderSuccess, setOrderSuccess] = useState(false);
 
+    // Calculate Fees
+    const hasHighValueItem = cart.some(item => item.price > 100);
+    const platformFee = hasHighValueItem ? total * 0.05 : 0;
+    const finalTotal = total + platformFee;
+
     const handleCheckout = async () => {
         setIsCheckingOut(true);
         try {
@@ -25,7 +30,7 @@ const CartPage = () => {
             await axios.post('https://farmdirect-2.onrender.com/api/orders', {
                 consumerId: user.id,
                 items: orderItems,
-                totalAmount: total
+                totalAmount: finalTotal
             });
 
             setOrderSuccess(true);
@@ -98,13 +103,13 @@ const CartPage = () => {
                                 <span>₹{total.toFixed(2)}</span>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', margin: '20px 0' }}>
-                                <span>Service Fee</span>
-                                <span>₹0.00</span>
+                                <span>Platform Fee {hasHighValueItem && '(5%)'}</span>
+                                <span>₹{platformFee.toFixed(2)}</span>
                             </div>
                             <hr style={{ border: 'none', borderTop: '1px solid #eee' }} />
                             <div style={{ display: 'flex', justifyContent: 'space-between', margin: '20px 0', fontSize: '1.2rem', fontWeight: 'bold' }}>
                                 <span>Total</span>
-                                <span>₹{total.toFixed(2)}</span>
+                                <span>₹{finalTotal.toFixed(2)}</span>
                             </div>
                             <button
                                 className="btn btn-primary"

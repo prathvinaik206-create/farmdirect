@@ -55,7 +55,8 @@ const ConsumerProfile = () => {
                 alert('Your account has been deleted.');
             } catch (err) {
                 console.error(err);
-                alert('Failed to delete account.');
+                const errorMessage = err.response?.data?.error || err.message || 'Failed to delete account.';
+                alert(`Error: ${errorMessage}`);
             }
         }
     };
